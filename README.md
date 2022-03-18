@@ -1,4 +1,4 @@
-# <img align="left" alt="Icon" width="50px" src="https://github.com/KamikaziZen/light_attention/blob/main/img/lightweight.png"> Light Attention
+# <img align="left" alt="Icon" width="50px" src="./img/lightweight.png"> Light Attention
 
 This project reduces memory requirements of attention mechanism. This is achieved by two adjustments: Softmax function that doesn't save inputs for backward computation and a merged Dropout + Matmul operation.
 
@@ -7,7 +7,7 @@ Attention mechanism uses softmax on the output of Q*K.T operation. Thus, both in
 Vanilla Softmax implementation in PyTorch saves both input and output for a backward operation. 
 Implementation in this repository computes gradients using only layer outputs. This allowes reduction in memory requirements by O(seq_length^2).
 
-<img src="https://github.com/KamikaziZen/light_attention/blob/main/img/softmax.svg">
+<img src="./img/softmax.svg">
 
 
 ## Merged DropMatmul
