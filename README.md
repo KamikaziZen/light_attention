@@ -2,6 +2,8 @@
 
 This project reduces memory requirements of attention mechanism. This is achieved by two adjustments: Softmax function that doesn't save inputs for backward computation and a merged Dropout + Matmul operation.
 
+<img src="./img/LightAttention.png">
+
 ## Light Softmax
 Attention mechanism uses softmax on the output of Q*K.T operation. Thus, both input and output of a Softmax layer allocate O(seq_length^2) memory. 
 Vanilla Softmax implementation in PyTorch saves both input and output for a backward operation. 
