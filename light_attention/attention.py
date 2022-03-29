@@ -1,3 +1,6 @@
+# This code was modified from gpt2 model from huggingface transformers 
+# https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
+
 import torch
 import torch.nn.functional as F
 from torch import nn
