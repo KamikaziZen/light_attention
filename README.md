@@ -62,3 +62,7 @@ Memory stats for a training loop of classic GPT2 model(batch_size=4, blocks=12, 
 |  :---:  |  :---:  |  :---:  |  :---:  |
 | Vanilla gpt2  | 12119.3 | 12654.0 | 11631.8 |
 | Light gpt2  | 7799.3 | 7902.0 |  7311.8 |
+
+### Attributions
+Code in this repository is a modified version of gpt2 model from [huggingface transformers](https://github.com/huggingface/transformers).
+Icon is taken from [Flaticon](https://www.flaticon.com/free-icons/lightweight).
