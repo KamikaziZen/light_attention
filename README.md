@@ -38,7 +38,7 @@ To use DropMatmul outside of attention block, import it with:
 ```
 from light_attention.attention import drop_matmul
 
-drop_matmul.apply(x)
+drop_matmul(x)
 ```
 
 To use Dropmatmul in Attention block you can import either LightAttention module or whole LightGPT2 model:
@@ -58,6 +58,7 @@ config = GPT2Config(use_lightsoftmax=True, use_dropmatmul=True)
 
 ## Benchmarks
 (tested on torch==1.10. torch==1.11 negates the effect of lightsoftmax. probably because of functorch implementations. dropmatmul still gives about 20% memory reduction.)
+
 Memory stats for a training loop of classic GPT2 model(batch_size=4, blocks=12, seq_length=1024, emb_size=768):
 | Model  | Max Memory Allocated, MB | Max Memory Reserved, MB | Activations Memory, MB |
 |  :---:  |  :---:  |  :---:  |  :---:  |
