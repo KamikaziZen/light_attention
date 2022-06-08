@@ -33,6 +33,8 @@ class LightSoftmax(torch.autograd.Function):
             Contact the developer.')
         # TODO: insert epsilon-defense against N-N !=0 mistakes?
         return sm_res * (grad_output - summ.unsqueeze(-1))
+    
+light_softmax = LightSoftmax.apply
 
 
 class DropMatmul(torch.autograd.Function):
@@ -60,6 +62,8 @@ class DropMatmul(torch.autograd.Function):
                    torch.matmul(torch.transpose(mat1 * mask / (1 - pdrop), -1, -2), grad_output), None
         else:
             raise ValueError('Incorrect number of saved tensors.')
+
+drop_matmul = DropMatmul.apply
 
 
 class LightAttention(nn.Module):
@@ -146,7 +150,7 @@ class LightAttention(nn.Module):
             attn_weights = attn_weights + attention_mask
 
         if self.use_lightsoftmax is True:
-            attn_weights = LightSoftmax.apply(attn_weights)
+            attn_weights = light_softmax(attn_weights)
         else:
             attn_weights = nn.functional.softmax(attn_weights, dim=-1)
 
@@ -154,7 +158,7 @@ class LightAttention(nn.Module):
         attn_weights = attn_weights.type(value.dtype)
         
         if self.use_dropmatmul is True:
-            attn_output = DropMatmul.apply(attn_weights, value, self.attn_pdrop)
+            attn_output = drop_matmul(attn_weights, value, self.attn_pdrop)
         else:
             attn_weights = self.attn_dropout(attn_weights)
 
@@ -166,63 +170,6 @@ class LightAttention(nn.Module):
 
         if self.use_dropmatmul is False:
             attn_output = torch.matmul(attn_weights, value)
-
-        return attn_output, attn_weights
-
-    def _upcast_and_reordered_attn(self, query, key, value, attention_mask=None, head_mask=None):
-        # Use `torch.baddbmm` (a bit more efficient w/ alpha param for scaling -- from Megatron-LM)
-        bsz, num_heads, q_seq_len, dk = query.size()
-        _, _, k_seq_len, _ = key.size()
-
-        # Preallocate attn_weights for `baddbmm`
-        attn_weights = torch.empty(bsz * num_heads, q_seq_len, k_seq_len, dtype=torch.float32, device=query.device)
-
-        # Compute Scale Factor
-        scale_factor = 1.0
-        if self.scale_attn_weights:
-            scale_factor /= float(value.size(-1)) ** 0.5
-
-        if self.scale_attn_by_inverse_layer_idx:
-            scale_factor /= float(self.layer_idx + 1)
-
-        # Upcast (turn off autocast) and reorder (Scale K by 1 / root(dk))
-        if is_amp_available:
-            with autocast(enabled=False):
-                q, k = query.reshape(-1, q_seq_len, dk), key.transpose(-1, -2).reshape(-1, dk, k_seq_len)
-                attn_weights = torch.baddbmm(attn_weights, q.float(), k.float(), beta=0, alpha=scale_factor)
-                attn_weights = attn_weights.reshape(bsz, num_heads, q_seq_len, k_seq_len)
-        else:
-            q, k = query.reshape(-1, q_seq_len, dk), key.transpose(-1, -2).reshape(-1, dk, k_seq_len)
-            attn_weights = torch.baddbmm(attn_weights, q.float(), k.float(), beta=0, alpha=scale_factor)
-            attn_weights = attn_weights.reshape(bsz, num_heads, q_seq_len, k_seq_len)
-
-        if not self.is_cross_attention:
-            # if only "normal" attention layer implements causal mask
-            query_length, key_length = query.size(-2), key.size(-2)
-            causal_mask = self.bias[:, :, key_length - query_length : key_length, :key_length].bool()
-            attn_weights = torch.where(causal_mask, attn_weights, self.masked_bias.to(attn_weights.dtype))
-
-        if attention_mask is not None:
-            # Apply the attention mask
-            attn_weights = attn_weights + attention_mask
-
-#         attn_weights = nn.functional.softmax(attn_weights, dim=-1)
-        attn_weights = AttnSoftmax.apply(attn_weights, 0.1)
-
-        # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op if otherwise
-        if attn_weights.dtype != torch.float32:
-            raise RuntimeError("Error with upcasting, attn_weights does not have dtype torch.float32")
-        attn_weights = attn_weights.type(value.dtype)
-#         attn_weights = self.attn_dropout(attn_weights)
-
-        attn_output = DropMatmul.apply(attn_weights, value, self.attn_pdrop)
-
-        # Mask heads if we want to
-        if head_mask is not None:
-            raise NotImplementedError('Masking heads is not yet implemented in LightSoftmax. Contact the developer.')
-            # attn_weights = attn_weights * head_mask
-
-        # attn_output = torch.matmul(attn_weights, value)
 
         return attn_output, attn_weights
 
@@ -281,7 +228,7 @@ class LightAttention(nn.Module):
             present = None
 
         if self.reorder_and_upcast_attn:
-            attn_output, attn_weights = self._upcast_and_reordered_attn(query, key, value, attention_mask, head_mask)
+            raise NotImplementedError('Reorder and upcast is not yet implemented for LightAttention')
         else:
             attn_output, attn_weights = self._attn(query, key, value, attention_mask, head_mask)
 
