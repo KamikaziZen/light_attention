@@ -59,11 +59,19 @@ config = GPT2Config(use_lightsoftmax=True, use_dropmatmul=True)
 ## Benchmarks
 (tested on torch==1.10. torch==1.11 negates the effect of lightsoftmax. probably because of functorch implementations. dropmatmul still gives about 20% memory reduction.)
 
-Memory stats for a training loop of classic GPT2 model(batch_size=4, blocks=12, seq_length=1024, emb_size=768):
-| Model  | Max Memory Allocated, MB | Max Memory Reserved, MB | Activations Memory, MB |
-|  :---:  |  :---:  |  :---:  |  :---:  |
-| Vanilla gpt2  | 12119.3 | 12654.0 | 11631.8 |
-| Light gpt2  | 7799.3 | 7902.0 |  7311.8 |
+Experiment was conducted on a single GPU NVIDIA A100 80Gb. Memory stats for a training loop of classic GPT2 model configurations(gpt2-small/-medium/-large/-xl) and batch_size==4:
+| Model  | Max Memory Allocated, MB | Max Memory Reserved, MB |
+|  :---:  |  :---:  |  :---:  |
+| Vanilla gpt2-small | 12119.3 | 12654.0 |
+| Light gpt2-small | 7799.3 | 7902.0 |
+| Vanilla gpt2-medium | 32351.126 | 33558.0 |
+| Light gpt2-medium | 20831.126 | 20870.0 |
+| Vanilla gpt2-large | 61104.6338 | 63376.0 |
+| Light gpt2-large | 39504.6338 | 39616.0 |
+| Vanilla gpt2-xl | - | - |
+| Light gpt2-xl | 67049.7734 | 67132.0 |
+
+```-``` means that there was not enough memory to perform a single forward-backward iteration with this configuration.
 
 ### Attributions
 Code in this repository is a modified version of gpt2 model from [huggingface transformers](https://github.com/huggingface/transformers).
