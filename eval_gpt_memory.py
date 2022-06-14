@@ -19,8 +19,8 @@ parser.add_argument('--n_head', type=int, required=True, help='number of attenti
 parser.add_argument('--n_embd', type=int, required=True, help='embeddings dimention')
 parser.add_argument('--n_positions', type=int, required=True, help='max context length')
 parser.add_argument('--batch_size', type=int, required=True, help='batch size')
-parser.add_argument('--light_softmax', action='store_true')
-parser.add_argument('--drop_matmul', action='store_true')
+parser.add_argument('--light_softmax', action='store_true', help='flag that indicates whether to use light_softmax or pytorch softmax')
+parser.add_argument('--drop_matmul', action='store_true', help='flag that indicates whether to use drop_matmul or unfused implementation of dropout and matmul')
 parser.add_argument('--seed', type=int, required=True, help='random seed')
 
 args = parser.parse_args()
