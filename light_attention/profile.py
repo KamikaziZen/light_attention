@@ -245,12 +245,12 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None,
     mem_stats_1 = mem_usage()
     print(f'\nParams (empirical) {round(mem_stats_1[0] - mem_stats_0[0], 4)} MB')
 
-    param_bytes = 0
-    for pname, p in m.named_parameters():
-        # print(pname, p.shape)
-        param_bytes += p.numel() * p.element_size()
-    param_bytes = param_bytes * 1 / (1024 * 1024)
-    print(f'\nParams (analytical, torch) {round(param_bytes, 4)} MB')
+    # param_bytes = 0
+    # for pname, p in m.named_parameters():
+    #     # print(pname, p.shape)
+    #     param_bytes += p.numel() * p.element_size()
+    # param_bytes = param_bytes * 1 / (1024 * 1024)
+    # print(f'\nParams (analytical, torch) {round(param_bytes, 4)} MB')
 
     if x is None:
         x = torch.randn(input_shape, device=device)
@@ -275,18 +275,18 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None,
     mem_stats_3 = mem_usage()
 
     print()
-    act_bytes = 0
-    for k, (name, el, fn) in RES.items():
-        if el is None:
-            continue
-        if ("weight" in name) or ("bias" in name):
-            continue
-        act_bytes += el
-        if verbose:
-            print(k, fn, name, el / (1024 * 1024), )
-            print()
-    act_bytes = act_bytes * 1 / (1024 * 1024)
-    print(f'\nActivations (analytical, torchviz) {round(act_bytes, 4)} MB')
+    # act_bytes = 0
+    # for k, (name, el, fn) in RES.items():
+    #     if el is None:
+    #         continue
+    #     if ("weight" in name) or ("bias" in name):
+    #         continue
+    #     act_bytes += el
+    #     if verbose:
+    #         print(k, fn, name, el / (1024 * 1024), )
+    #         print()
+    # act_bytes = act_bytes * 1 / (1024 * 1024)
+    # print(f'\nActivations (analytical, torchviz) {round(act_bytes, 4)} MB')
     print(f'Activations (empirical) {round(mem_stats_3[0] - mem_stats_1[0], 4)} MB')
 
     x = m = None
