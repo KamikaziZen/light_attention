@@ -36,7 +36,7 @@ When using dropout before multiplying Softmax output (S) by Values tensor (V) Py
 
 To use DropMatmul outside of attention block, import it with:
 ```
-from light_attention.attention import drop_matmul
+from light_attention.nn.functional.drop_matmul import drop_matmul
 
 drop_matmul(x)
 ```
@@ -44,7 +44,7 @@ drop_matmul(x)
 To use Dropmatmul in Attention block you can import either LightAttention module or whole LightGPT2 model:
 ```
 from transformers import GPT2Config
-from light_attention.attention import LightAttention, LightGPT2LMHeadModel, LightGPT2Model
+from light_attention.nn.modules.transformer import LightAttention, LightGPT2LMHeadModel, LightGPT2Model
 
 config = GPT2Config(use_dropmatmul=True)
 attn = LightAttention(config)
@@ -72,6 +72,25 @@ Experiment was conducted on a single GPU NVIDIA A100 80Gb. Memory stats for a tr
 | Light gpt2-xl | 67049.7734 | 67132.0 |
 
 ```-``` means that there was not enough memory to perform a single forward-backward iteration with this configuration.
+
+Command to run this experiment: 
+```
+python eval_gpt_memory.py --n_layer=12 --n_head=12 --n_embd=768 --n_posiitons=1024 --batch_size=4 --light_softmax --dropmatmul --seed=0
+```
+optional arguments:
+```
+  -h, --help            show this help message and exit
+  --n_layer N_LAYER     number of transformer blocks
+  --n_head N_HEAD       number of attention heads
+  --n_embd N_EMBD       embeddings dimention
+  --n_positions N_POSITIONS
+                        max context length
+  --batch_size BATCH_SIZE
+                        batch size
+  --light_softmax       flag that indicates whether to use light_softmax or pytorch softmax
+  --drop_matmul         flag that indicates whether to use drop_matmul or unfused implementation of dropout and matmul
+  --seed SEED           random seed
+```
 
 ### Attributions
 Code in this repository is a modified version of gpt2 model from [huggingface transformers](https://github.com/huggingface/transformers).
