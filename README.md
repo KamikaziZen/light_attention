@@ -13,7 +13,7 @@ Implementation in this repository computes gradients using only layer outputs. T
 
 To use LightSoftmax outside of attention block, import it with:
 ```
-from light_attention.attention import light_softmax
+from light_attention.nn.functional.light_softmax import light_softmax
 
 light_softmax(x)
 ```
@@ -21,7 +21,7 @@ light_softmax(x)
 To use LightSoftmax in Attention block you can import either LightAttention module or whole LightGPT2 model:
 ```
 from transformers import GPT2Config
-from light_attention.attention import LightAttention, LightGPT2LMHeadModel, LightGPT2Model
+from light_attention.nn.modules.transformer import LightAttention, LightGPT2LMHeadModel, LightGPT2Model
 
 config = GPT2Config(use_lightsoftmax=True)
 attn = LightAttention(config)
