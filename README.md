@@ -94,7 +94,8 @@ optional arguments:
 
 ## UnitTests
 ```python -m unittest discover -p test_*.py -t . -s light_attention```
-Tests check that light_softmax and dropmatmul produce same outputs and gradients as the original functions. 
+
+Tests check that light_softmax and drop_matmul produce same outputs and gradients as the original functions. 
 
 ### Attributions
 Code in this repository is a modified version of gpt2 model from [huggingface transformers](https://github.com/huggingface/transformers).
