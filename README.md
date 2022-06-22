@@ -92,6 +92,10 @@ optional arguments:
   --seed SEED           random seed
 ```
 
+## UnitTests
+```python -m unittest discover -p test_*.py -t . -s light_attention```
+Tests check that light_softmax and dropmatmul produce same outputs and gradients as the original functions. 
+
 ### Attributions
 Code in this repository is a modified version of gpt2 model from [huggingface transformers](https://github.com/huggingface/transformers).
 Icon is taken from [Flaticon](https://www.flaticon.com/free-icons/lightweight).
