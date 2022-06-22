@@ -12,6 +12,8 @@ from transformers.modeling_utils import Conv1D
 
 from light_attention.nn.functional.light_softmax import light_softmax
 from light_attention.nn.functional.drop_matmul import drop_matmul
+from light_attention.nn.modules.drop_matmul import DropMatmul
+from light_attention.nn.modules.light_softmax import LightSoftmax
 
 
 class LightAttention(nn.Module):
@@ -49,18 +51,24 @@ class LightAttention(nn.Module):
             self.q_attn = Conv1D(self.embed_dim, self.embed_dim)
         else:
             self.c_attn = Conv1D(3 * self.embed_dim, self.embed_dim)
-        self.c_proj = Conv1D(self.embed_dim, self.embed_dim)
-
-        self.resid_dropout = nn.Dropout(config.resid_pdrop)
-
-        self.pruned_heads = set()
-
+         
+        self.use_lightsoftmax = config.use_lightsoftmax
+        if self.use_lightsoftmax:
+            self.light_softmax = LightSoftmax()
+            
         self.attn_pdrop = config.attn_pdrop
         if config.use_dropmatmul is False:
             self.attn_dropout = nn.Dropout(config.attn_pdrop)
             
         self.use_dropmatmul = config.use_dropmatmul
-        self.use_lightsoftmax = config.use_lightsoftmax
+        if self.use_dropmatmul:
+            self.drop_matmul = DropMatmul(self.attn_pdrop)
+            
+        self.c_proj = Conv1D(self.embed_dim, self.embed_dim)
+            
+        self.resid_dropout = nn.Dropout(config.resid_pdrop)
+
+        self.pruned_heads = set()
 
     def prune_heads(self, heads):
         if len(heads) == 0:
@@ -98,7 +106,8 @@ class LightAttention(nn.Module):
             attn_weights = attn_weights + attention_mask
 
         if self.use_lightsoftmax is True:
-            attn_weights = light_softmax(attn_weights)
+            # attn_weights = light_softmax(attn_weights)
+            attn_weights = self.light_softmax(attn_weights)
         else:
             attn_weights = nn.functional.softmax(attn_weights, dim=-1)
 
@@ -106,7 +115,8 @@ class LightAttention(nn.Module):
         attn_weights = attn_weights.type(value.dtype)
         
         if self.use_dropmatmul is True:
-            attn_output = drop_matmul(attn_weights, value, self.attn_pdrop)
+            # attn_output = drop_matmul(attn_weights, value, self.attn_pdrop)
+            attn_output = self.drop_matmul(attn_weights, value)
         else:
             attn_weights = self.attn_dropout(attn_weights)
 
