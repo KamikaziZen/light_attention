@@ -1,3 +1,7 @@
+"""Functions for profiling: estimating cuda memory, building backward graph, tracking saved activations.
+"""
+
+
 import copy
 import gc
 from collections import namedtuple
@@ -14,7 +18,10 @@ Node = namedtuple('Node', ('name', 'inputs', 'attr', 'op'))
 SAVED_PREFIX = "_saved_"
 
 
+# pytorchviz
 def get_fn_name(fn, show_attrs, max_attr_chars):
+    """Supporting function for make_dot.
+    """
     name = str(type(fn).__name__)
     if not show_attrs:
         return name
@@ -42,8 +49,12 @@ def get_fn_name(fn, show_attrs, max_attr_chars):
     return name + '\n' + sep + '\n' + params
 
 
+# pytorchviz
 def make_dot(var, params=None, show_attrs=False, show_saved=False, max_attr_chars=50, verbose=False):
-    """ Produces Graphviz representation of PyTorch autograd graph.
+    """
+    This is a modified version of a make_dot function from pytorchviz.
+    The modification is done to render the custom-saved tensors of the light attention mechanism.
+    Produces Graphviz representation of PyTorch autograd graph.
     If a node represents a backward function, it is gray. Otherwise, the node
     represents a tensor and is either blue, orange, or green:
      - Blue: reachable leaf tensors that requires grad (tensors whose `.grad`
@@ -54,16 +65,19 @@ def make_dot(var, params=None, show_attrs=False, show_saved=False, max_attr_char
      - Dark green: if any output is a view, we represent its base tensor with
          a dark green node.
      - Pink: Tensors saved by custom autograd functions.
-    Args:
-        var: output tensor
-        params: dict of (name, tensor) to add names to node that requires grad
-        show_attrs: whether to display non-tensor attributes of backward nodes
-            (Requires PyTorch version >= 1.9)
-        show_saved: whether to display saved tensor nodes that are not by custom
-            autograd functions. Saved tensor nodes for custom functions, if
-            present, are always displayed. (Requires PyTorch version >= 1.9)
-        max_attr_chars: if show_attrs is `True`, sets max number of characters
-            to display for any given attribute.
+
+    Parameters
+    ----------
+    var : torch.tensor
+        output tensor
+    params : dict, optional
+        dict of (name, tensor) to add names to node that requires grad
+    show_attrs : bool, optional
+        whether to display non-tensor attributes of backward nodes
+        (Requires PyTorch version >= 1.9)
+    max_attr_chars : int, optional
+        if show_attrs is `True`, sets max number of characters
+        to display for any given attribute
     """
     RES = {}
     if LooseVersion(torch.__version__) < LooseVersion("1.9") and \
@@ -201,8 +215,10 @@ def make_dot(var, params=None, show_attrs=False, show_saved=False, max_attr_char
     return dot, RES
 
 
+# pytorchviz
 def resize_graph(dot, size_per_element=0.15, min_size=12):
-    """Resize the graph according to how much content it contains.
+    """This is a supporting function for make_dot.
+    Resize the graph according to how much content it contains.
     Modify the graph in place.
     """
     # Get the approximate number of nodes and edges
@@ -214,6 +230,14 @@ def resize_graph(dot, size_per_element=0.15, min_size=12):
 
 
 def mem_usage():
+    """
+    Prints out cuda memory usage statistics in megabytes.
+
+    Returns
+    -------
+    tuple
+        Tuple (memory allocated, max memory allocated, reserved memory, max reserved memory) in megabytes.
+    """
     gc.collect()
 
     if hasattr(torch.cuda, "reset_peak_memory_stats"):  # pytorch 1.4+
@@ -237,6 +261,27 @@ def mem_usage():
 
 
 def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None, verbose=False):
+    """
+    Prints out memory stats for stages of the training loop: loading of weights, forward path, backward path.
+    Memory stats have a format of tuple (memory allocated, max memory allocated, reserved memory, max reserved memory).
+
+    Parameters
+    ----------
+    m : torch.module
+        model, module or layer
+    x : torch.tensor, optional
+        input tensor, will be randomly generated if none
+    device : string, optional
+        cpu or cuda
+    input_shape : tuple, optional
+        input shape of m
+    fout : string, optional
+        name of the file to store graph render,
+        if fout is none the graph is not rendered
+    verbose : bool, optional
+        verbose while building a graph
+
+    """
     print('\nBefore placing the model on GPU')
     mem_stats_0 = mem_usage()
 
@@ -250,7 +295,7 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None,
     #     # print(pname, p.shape)
     #     param_bytes += p.numel() * p.element_size()
     # param_bytes = param_bytes * 1 / (1024 * 1024)
-    # print(f'\nParams (analytical, torch) {round(param_bytes, 4)} MB')
+    # print(f'\nParams (analytical, from graph) {round(param_bytes, 4)} MB')
 
     if x is None:
         x = torch.randn(input_shape, device=device)
@@ -266,8 +311,8 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None,
         
     y = y.cos().mean()
     
-    dot, RES = make_dot(y, params=dict(m.named_parameters()), show_attrs=True, show_saved=True, verbose=verbose)
     if fout is not None:
+        dot, RES = make_dot(y, params=dict(m.named_parameters()), show_attrs=True, show_saved=True, verbose=verbose)
         dot.render(fout, view=False)
         print(f'\nGraph has been saved in {fout}.pdf.')
 
@@ -286,7 +331,7 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None,
     #         print(k, fn, name, el / (1024 * 1024), )
     #         print()
     # act_bytes = act_bytes * 1 / (1024 * 1024)
-    # print(f'\nActivations (analytical, torchviz) {round(act_bytes, 4)} MB')
+    # print(f'\nActivations (analytical, from graph) {round(act_bytes, 4)} MB')
     print(f'Activations (empirical) {round(mem_stats_3[0] - mem_stats_1[0], 4)} MB')
 
     x = m = None

@@ -74,8 +74,27 @@ Experiment was conducted on a single GPU NVIDIA A100 80Gb. Memory stats for a tr
 ```-``` means that there was not enough memory to perform a single forward-backward iteration with this configuration.
 
 Command to run this experiment: 
-```
-python eval_gpt_memory.py --n_layer=12 --n_head=12 --n_embd=768 --n_posiitons=1024 --batch_size=4 --light_softmax --dropmatmul --seed=0
+```shell
+$ python eval_gpt_memory.py \
+    --n_layer=12 \
+    --n_head=12 \
+    --n_embd=768 \
+    --n_positions=1024 \
+    --batch_size=4 \
+    --light_softmax \
+    --drop_matmul \
+    --seed=3407
+Pytorch version: 1.10.0a0+0aef44c
+Before placing the model on GPU
+MA 0.0312 MB         Max_MA 0.0312 MB         CA 2.0 MB         Max_CA 2.0 MB
+After placing the model on GPU:
+MA 487.5 MB         Max_MA 487.5 MB         CA 542.0 MB         Max_CA 542.0 MB
+Params (empirical) 487.4688 MB
+After input batch generation, before forward pass:
+MA 487.5 MB         Max_MA 487.5 MB         CA 542.0 MB         Max_CA 542.0 MB
+After backward:
+MA 7799.2896 MB         Max_MA 7799.2896 MB         CA 7902.0 MB         Max_CA 7902.0 MB
+Activations (empirical) 7311.7896 MB
 ```
 optional arguments:
 ```

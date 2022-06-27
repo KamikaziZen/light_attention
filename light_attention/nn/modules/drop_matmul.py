@@ -3,7 +3,8 @@ from light_attention.nn.functional.drop_matmul import drop_matmul
 
 
 class DropMatmul(nn.Module):
-
+    """Module for nn.functional.drop_matmul function.
+    """
     def __init__(self, p: float = 0.5, inplace: bool = False):
         super().__init__()
         if inplace:

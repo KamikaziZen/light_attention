@@ -1,5 +1,6 @@
-# This code was modified from gpt2 model from huggingface transformers 
-# https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
+"""This code was modified from gpt2 model from huggingface transformers
+https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
+"""
 
 import torch
 import torch.nn.functional as F
@@ -17,6 +18,7 @@ from light_attention.nn.modules.light_softmax import LightSoftmax
 
 
 class LightAttention(nn.Module):
+    """Hugging Face Attention mechanism equipped with light_softmax and drop_matmul functions."""
     def __init__(self, config, is_cross_attention=False, layer_idx=None):
         super().__init__()
 
@@ -202,6 +204,7 @@ class LightAttention(nn.Module):
 
 
 class LightGPT2Block(nn.Module):
+    """Hugging Face GPT2Block equipped with Light Attention mechanism."""
     def __init__(self, config, layer_idx=None):
         super().__init__()
         hidden_size = config.hidden_size
@@ -280,6 +283,7 @@ class LightGPT2Block(nn.Module):
     
     
 class LightGPT2Model(GPT2PreTrainedModel):
+    """Hugging Face GPT2Model equipped with a LightGPT2Block instead of GPT2Block."""
     _keys_to_ignore_on_load_missing = ["attn.masked_bias"]
 
     def __init__(self, config):
@@ -542,6 +546,7 @@ class LightGPT2Model(GPT2PreTrainedModel):
     
 
 class LightGPT2LMHeadModel(GPT2PreTrainedModel):
+    """Hugging Face GPT2LMHeadModel equipped with a LightGPT2Block instead of GPT2Block."""
     _keys_to_ignore_on_load_missing = [r"attn.masked_bias", r"attn.bias", r"lm_head.weight"]
 
     def __init__(self, config):
