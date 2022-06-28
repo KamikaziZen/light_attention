@@ -11,13 +11,11 @@ from transformers.modeling_outputs import BaseModelOutputWithPastAndCrossAttenti
 from transformers.models.gpt2.modeling_gpt2 import GPT2MLP, GPT2PreTrainedModel
 from transformers.modeling_utils import Conv1D
 
-from light_attention.nn.functional.light_softmax import light_softmax
-from light_attention.nn.functional.drop_matmul import drop_matmul
 from light_attention.nn.modules.drop_matmul import DropMatmul
 from light_attention.nn.modules.light_softmax import LightSoftmax
 
 
-class LightAttention(nn.Module):
+class LightGPT2Attention(nn.Module):
     """Hugging Face Attention mechanism equipped with light_softmax and drop_matmul functions."""
     def __init__(self, config, is_cross_attention=False, layer_idx=None):
         super().__init__()
@@ -188,7 +186,7 @@ class LightAttention(nn.Module):
             present = None
 
         if self.reorder_and_upcast_attn:
-            raise NotImplementedError('Reorder and upcast is not yet implemented for LightAttention')
+            raise NotImplementedError('Reorder and upcast is not yet implemented for LightGPT2Attention')
         else:
             attn_output, attn_weights = self._attn(query, key, value, attention_mask, head_mask)
 
@@ -211,11 +209,11 @@ class LightGPT2Block(nn.Module):
         inner_dim = config.n_inner if config.n_inner is not None else 4 * hidden_size
 
         self.ln_1 = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
-        self.attn = LightAttention(config, layer_idx=layer_idx)
+        self.attn = LightGPT2Attention(config, layer_idx=layer_idx)
         self.ln_2 = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
 
         if config.add_cross_attention:
-            self.crossattention = LightAttention(config, is_cross_attention=True, layer_idx=layer_idx)
+            self.crossattention = LightGPT2Attention(config, is_cross_attention=True, layer_idx=layer_idx)
             self.ln_cross_attn = nn.LayerNorm(hidden_size, eps=config.layer_norm_epsilon)
 
         self.mlp = GPT2MLP(inner_dim, config)

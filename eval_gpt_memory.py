@@ -5,7 +5,7 @@ import copy
 import tqdm
 import argparse
 
-from light_attention.nn.modules.transformer import LightGPT2LMHeadModel, LightGPT2Model
+from light_attention.models.gpt2 import LightGPT2LMHeadModel, LightGPT2Model
 from light_attention.profile import estimate_layer_memory, mem_usage
 
 
