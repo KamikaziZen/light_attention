@@ -12,4 +12,7 @@ class DropMatmul(nn.Module):
         self.p = p
 
     def forward(self, lhs, rhs):
-        return drop_matmul(lhs, rhs, self.p)
+        return drop_matmul(lhs, rhs, self.p, self.training)
+    
+    def __repr__(self):
+        return '{}(p={})'.format(self._get_name(), self.p)

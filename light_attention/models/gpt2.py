@@ -106,7 +106,6 @@ class LightGPT2Attention(nn.Module):
             attn_weights = attn_weights + attention_mask
 
         if self.use_lightsoftmax is True:
-            # attn_weights = light_softmax(attn_weights)
             attn_weights = self.light_softmax(attn_weights)
         else:
             attn_weights = nn.functional.softmax(attn_weights, dim=-1)
@@ -115,7 +114,6 @@ class LightGPT2Attention(nn.Module):
         attn_weights = attn_weights.type(value.dtype)
         
         if self.use_dropmatmul is True:
-            # attn_output = drop_matmul(attn_weights, value, self.attn_pdrop)
             attn_output = self.drop_matmul(attn_weights, value)
         else:
             attn_weights = self.attn_dropout(attn_weights)

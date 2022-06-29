@@ -7,7 +7,7 @@ class DropMatmul(torch.autograd.Function):
     with a single merged operation. This allows storing less activations.
     """
     @staticmethod
-    def forward(ctx, mat1, mat2, pdrop):
+    def forward(ctx, mat1, mat2, pdrop, training=True):
         """Merged forward operation for consecutive dropout and matmul.
         It applies dropout to mat1 and multiplies(matmul) the result by mat2.
 
@@ -29,7 +29,7 @@ class DropMatmul(torch.autograd.Function):
         """
         # using torch.functional for fast kernels
         if pdrop > 0:
-            mat1_masked = F.dropout(mat1, pdrop)
+            mat1_masked = F.dropout(mat1, pdrop, training)
             mask = torch.ne(mat1_masked, 0)
             ctx.save_for_backward(mat1, mat2, mask, torch.tensor(pdrop))
             return torch.matmul(mat1_masked, mat2)
