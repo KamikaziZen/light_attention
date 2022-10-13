@@ -27,8 +27,8 @@ class DropMatmul(torch.autograd.Function):
         torch.tensor
             matmul(dropout(mat1), mat2)
         """
-        # using torch.functional for fast kernels
-        if pdrop > 0:
+        if pdrop > 0 and training:
+#             mask = torch.empty_like(mat1, dtype=bool).bernoulli_(1-pdrop)
             mat1_masked = F.dropout(mat1, pdrop, training)
             mask = torch.ne(mat1_masked, 0)
             ctx.save_for_backward(mat1, mat2, mask, torch.tensor(pdrop))
@@ -59,11 +59,11 @@ class DropMatmul(torch.autograd.Function):
         mat1, mat2, *other = ctx.saved_tensors
         if len(other) == 0:
             return torch.matmul(grad_output, torch.transpose(mat2, -1, -2)), \
-                   torch.matmul(torch.transpose(mat1, -1, -2), grad_output), None
+                   torch.matmul(torch.transpose(mat1, -1, -2), grad_output), None, None
         elif len(other) == 2:
             mask, pdrop = other
             return torch.matmul(grad_output, torch.transpose(mat2, -1, -2)) * mask / (1 - pdrop), \
-                   torch.matmul(torch.transpose(mat1 * mask / (1 - pdrop), -1, -2), grad_output), None
+                   torch.matmul(torch.transpose(mat1 * mask / (1 - pdrop), -1, -2), grad_output), None, None
         else:
             raise ValueError('Incorrect number of saved tensors.')
 
