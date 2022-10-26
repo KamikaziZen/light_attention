@@ -75,12 +75,12 @@ Experiment was conducted on a single GPU NVIDIA A100 80Gb. Memory stats for a tr
 ```-``` means that there was not enough memory to perform a single forward-backward iteration with this configuration.
 
 ### PyTorch==1.11
-| Model  | Max Memory Allocated, MB | Max Memory Reserved, MB | Max Memory Allocated, MB (Mixed Precision) | 
+| Model  | Max Memory Allocated, MB | Max Memory Reserved, MB |
 |  :---:  |  :---:  |  :---:  |
 | Vanilla gpt2-small | 9815.3 | 10322.0 |
-| Vanilla gpt2-small (mixed precision training) | 7821.6 | 8196.0 |
+| Vanilla gpt2-small <br /> (mixed precision training) | 7821.6 | 8196.0 |
 | Light gpt2-small | 7799.3 | 7886.0 |
-| Light gpt2-small (mixed precision training) | 6813.8 | 7060.0 |
+| Light gpt2-small <br /> (mixed precision training) | 6813.8 | 6964.0 |
 
 Command to run an experiment: 
 ```shell
