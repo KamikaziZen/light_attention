@@ -1,7 +1,5 @@
 """Functions for profiling: estimating cuda memory, building backward graph, tracking saved activations.
 """
-
-
 import copy
 import gc
 from collections import namedtuple
@@ -148,7 +146,7 @@ def make_dot(var, params=None, show_attrs=False, show_saved=False, max_attr_char
                             print(f'Replacing {RES[val.data_ptr()]} with \
                             {(get_var_name(val, attr), val.numel() * val.element_size())}')
                     else:
-                        dot.node(str(val.data_ptr()), get_var_name(val, attr), fillcolor='orange')
+                        dot.node(str(val.data_ptr()), get_var_name(val, f'{attr} {val.dtype}'), fillcolor='orange')
                     RES[val.data_ptr()] = (get_var_name(val, attr), val.numel() * val.element_size(), fn)
 
                 if isinstance(val, tuple):
@@ -260,7 +258,7 @@ def mem_usage():
     return (ma, max_ma, ca, max_ca)
 
 
-def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None, verbose=False):
+def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, mixed_precision=False, fout=None, verbose=False):
     """
     Prints out memory stats for stages of the training loop: loading of weights, forward path, backward path.
     Memory stats have a format of tuple (memory allocated, max memory allocated, reserved memory, max reserved memory).
@@ -282,6 +280,7 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None,
         verbose while building a graph
 
     """
+    if mixed_precision: scaler = torch.cuda.amp.GradScaler()
     print('\nBefore placing the model on GPU')
     mem_stats_0 = mem_usage()
 
@@ -300,24 +299,39 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None,
     if x is None:
         x = torch.randn(input_shape, device=device)
     print('\nAfter input batch generation, before forward pass:')
-    mem_stats_2 = mem_usage()
-    y = m(x)
-
+    _ = mem_usage()
+    
+    if mixed_precision:
+        with torch.autocast(device_type=device, dtype=torch.float16):
+            y = m(x)
+    else:
+        y = m(x)
     if isinstance(y, tuple):
         y = y[0]
-        
     if hasattr(y, 'last_hidden_state'):
         y = y.last_hidden_state
-        
     y = y.cos().mean()
+    torch.cuda.synchronize()
+    print('\nAfter forward pass, before backward pass:')
+    mem_stats_3 = mem_usage()
     
     if fout is not None:
         dot, RES = make_dot(y, params=dict(m.named_parameters()), show_attrs=True, show_saved=True, verbose=verbose)
         dot.render(fout, view=False)
         print(f'\nGraph has been saved in {fout}.pdf.')
 
+    if mixed_precision: scaler.scale(y).backward()
+    else: y.backward()
+    torch.cuda.synchronize()
     print('\nAfter backward:')
-    mem_stats_3 = mem_usage()
+    _ = mem_usage()
+    
+    m.zero_grad()
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.synchronize()
+    print('\nAfter model.zero_grad and cuda.empty_cache call:')
+    _ = mem_usage()
 
     print()
     # act_bytes = 0
@@ -334,7 +348,12 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, fout=None,
     # print(f'\nActivations (analytical, from graph) {round(act_bytes, 4)} MB')
     print(f'Activations (empirical) {round(mem_stats_3[0] - mem_stats_1[0], 4)} MB')
 
-    x = m = None
+    x = m = y =None
     del x
     del m
+    del y
+    gc.collect()
     torch.cuda.empty_cache()
+    torch.cuda.synchronize()
+    print('\nAfter model, output and input reset')
+    _ = mem_usage()
