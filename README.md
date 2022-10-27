@@ -75,12 +75,17 @@ Experiment was conducted on a single GPU NVIDIA A100 80Gb. Memory stats for a tr
 ```-``` means that there was not enough memory to perform a single forward-backward iteration with this configuration.
 
 ### PyTorch==1.11
-| Model  | Max Memory Allocated, MB | Max Memory Reserved, MB |
+<!-- | Model  | Max Memory Allocated, MB | Max Memory Reserved, MB |
 |  :---:  |  :---:  |  :---:  |
 | Vanilla gpt2-small | 9815.3 | 10322.0 |
 | Vanilla gpt2-small <br /> (mixed precision training) | 7821.6 | 8196.0 |
 | Light gpt2-small | 7799.3 | 7886.0 |
-| Light gpt2-small <br /> (mixed precision training) | 6813.8 | 6964.0 |
+| Light gpt2-small <br /> (mixed precision training) | 6813.8 | 6964.0 | -->
+
+| Model  | Activations Memory, MB | Activations Memory (with Mixed Precision Training), MB |
+|  :---:  |  :---:  |  :---:  |
+| Vanilla gpt2-small | 9327.8 | 7334.0 |
+| Light gpt2-small | 7311.8 | 6326.03 |
 
 Command to run an experiment: 
 ```shell
@@ -97,17 +102,28 @@ $ python eval_gpt_memory.py \
 ```
 Example output: 
 ```
-Pytorch version: 1.10.0+cu102
+Pytorch version: 1.11.0+cu102
+Namespace(batch_size=4, drop_matmul=True, light_softmax=False, mixed_precision=True, n_embd=768, n_head=12, n_layer=12, n_positions=1024, save_graph=False, seed=3407)
+
 Before placing the model on GPU
 MA 0.0312 MB         Max_MA 0.0312 MB         CA 2.0 MB         Max_CA 2.0 MB
+
 After placing the model on GPU:
 MA 487.5 MB         Max_MA 487.5 MB         CA 542.0 MB         Max_CA 542.0 MB
+
 Params (empirical) 487.4688 MB
+
 After input batch generation, before forward pass:
 MA 487.5 MB         Max_MA 487.5 MB         CA 542.0 MB         Max_CA 542.0 MB
+
+After forward pass, before backward pass:
+MA 6813.5396 MB         Max_MA 6813.5396 MB         CA 6964.0 MB         Max_CA 6964.0 MB
+
+Activations (empirical) 6326.0396 MB
+
 After backward:
-MA 7799.2896 MB         Max_MA 7799.2896 MB         CA 7902.0 MB         Max_CA 7902.0 MB
-Activations (empirical) 7311.7896 MB
+MA 963.3267 MB         Max_MA 963.3267 MB         CA 7456.0 MB         Max_CA 7456.0 MB
+
 ```
 Optional arguments:
 ```
@@ -119,10 +135,16 @@ Optional arguments:
                         max context length
   --batch_size BATCH_SIZE
                         batch size
-  --light_softmax       flag that indicates whether to use light_softmax or pytorch softmax
-  --drop_matmul         flag that indicates whether to use drop_matmul or unfused implementation of dropout and matmul
-  --mixed_precision     flag that indicates whether to use mixed_precision training (with torch.autocast)
+  --light_softmax       flag that indicates whether to use light_softmax or
+                        pytorch softmax
+  --drop_matmul         flag that indicates whether to use drop_matmul or
+                        unfused implementation of dropout and matmul
+  --mixed_precision     flag that indicates whether to use mixed precision
   --seed SEED           random seed
+  --save_graph          flag that indicates whether to use save the backward
+                        computation graph (try not to save graphs for networks
+                        with more than a couple of transformer blocks since
+                        resolution is not enough to adequately depict it)
 ```
 
 
@@ -131,6 +153,11 @@ Optional arguments:
 ```python -m unittest discover -p test_*.py -t . -s light_attention```
 
 Tests check that light_softmax and drop_matmul produce same outputs and gradients as the original functions. 
+
+## Notebook Examples
+```notebooks/LightGPT2AttentionTest.ipynb``` checks memory, numerical correctness and speed of LightGPT2Attention module in comparison with the HuggingFace GPT2Attention
+
+```notebooks/LightGPT2Test.ipynb``` checks memory, numerical correctness and speed of LightGPT2 model in comparison with the HuggingFace GPT2
 
 ### Attributions
 Code in this repository is a modified version of gpt2 model from [huggingface transformers](https://github.com/huggingface/transformers).
