@@ -5,9 +5,11 @@ import gc
 from collections import namedtuple
 from distutils.version import LooseVersion
 from graphviz import Digraph
+import warnings
+import os
+
 import torch
 from torch.autograd import Variable
-import warnings
 
 
 Node = namedtuple('Node', ('name', 'inputs', 'attr', 'op'))
@@ -314,23 +316,17 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, mixed_prec
     torch.cuda.synchronize()
     print('\nAfter forward pass, before backward pass:')
     mem_stats_3 = mem_usage()
+    print(f'\nActivations (empirical) {round(mem_stats_3[0] - mem_stats_1[0], 4)} MB')
     
     if fout is not None:
         dot, RES = make_dot(y, params=dict(m.named_parameters()), show_attrs=True, show_saved=True, verbose=verbose)
-        dot.render(fout, view=False)
+        dot.render(os.path.join('render',fout), view=False, format='pdf')
         print(f'\nGraph has been saved in {fout}.pdf.')
 
     if mixed_precision: scaler.scale(y).backward()
     else: y.backward()
     torch.cuda.synchronize()
     print('\nAfter backward:')
-    _ = mem_usage()
-    
-    m.zero_grad()
-    gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.synchronize()
-    print('\nAfter model.zero_grad and cuda.empty_cache call:')
     _ = mem_usage()
 
     print()
@@ -346,7 +342,6 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, mixed_prec
     #         print()
     # act_bytes = act_bytes * 1 / (1024 * 1024)
     # print(f'\nActivations (analytical, from graph) {round(act_bytes, 4)} MB')
-    print(f'Activations (empirical) {round(mem_stats_3[0] - mem_stats_1[0], 4)} MB')
 
     x = m = y =None
     del x
@@ -355,5 +350,3 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, mixed_prec
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.synchronize()
-    print('\nAfter model, output and input reset')
-    _ = mem_usage()

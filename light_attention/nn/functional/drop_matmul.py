@@ -65,7 +65,9 @@ class DropMatmul(torch.autograd.Function):
         elif len(other) == 2:
             mask, pdrop = other
             return torch.matmul(grad_output, torch.transpose(mat2, -1, -2)) * mask / (1 - pdrop), \
-                   torch.matmul(torch.transpose(mat1 * mask / (1 - pdrop), -1, -2), grad_output), None, None
+                   torch.matmul(torch.transpose(mat1 * mask / (1 - pdrop), -1, -2),
+                                grad_output), \
+                   None, None
         else:
             raise ValueError('Incorrect number of saved tensors.')
 

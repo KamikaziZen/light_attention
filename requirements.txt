@@ -1,3 +1,2 @@
 torch==1.10
 transformers==4.19.2
-rudalle==1.1.3

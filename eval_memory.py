@@ -24,24 +24,24 @@ parser.add_argument('--light_softmax', action='store_true', help='flag that indi
 parser.add_argument('--drop_matmul', action='store_true', help='flag that indicates whether to use drop_matmul or unfused implementation of dropout and matmul')
 parser.add_argument('--mixed_precision', action='store_true', help='flag that indicates whether to use mixed precision')
 parser.add_argument('--seed', type=int, required=True, help='random seed')
+parser.add_argument('--save_graph', action='store_true', help='flag that indicates whether to use save the backward computation graph (try not to save graphs for networks with more than a couple of transformer blocks since resolution is not enough to adequately depict it)')
 args = parser.parse_args()
 print(args)
 
 torch.manual_seed(args.seed)
-configuration = GPT2Config(n_head=args.n_head, n_layer=args.n_layer, n_positions=args.n_positions, n_embd=args.n_embd)
-# print(configuration)
-# model = LightGPT2Model(configuration)
+configuration = GPT2Config(n_head=args.n_head, n_layer=args.n_layer, n_positions=args.n_positions, n_embd=args.n_embd, use_lightsoftmax=args.light_softmax, use_dropmatmul=args.drop_matmul)
 model = GPT2Model(configuration)
 if args.light_softmax or args.drop_matmul:
-    configuration.use_lightsoftmax = args.light_softmax
-    configuration.use_dropmatmul = args.drop_matmul
     for i in range(len(model.h)):
         model.h[i].attn = LightGPT2Attention(configuration)
 
 b = args.batch_size
 seq = configuration.n_positions
 x = torch.randint(0, configuration.vocab_size, size=(b,seq), device='cuda')
-estimate_layer_memory(copy.deepcopy(model), x, device='cuda', input_shape=None, mixed_precision=args.mixed_precision, 
-                      fout=f'lsoftmax={args.light_softmax}_dropmat={args.drop_matmul}_mixed={args.mixed_precision}')
+if args.save_graph: 
+    fout=f'lsoftmax={args.light_softmax}_dropmat={args.drop_matmul}_mixed={args.mixed_precision}'
+else:
+    fout = None
+estimate_layer_memory(copy.deepcopy(model), x, device='cuda', input_shape=None, 
+                      mixed_precision=args.mixed_precision, fout=fout)
 # estimate_layer_memory(copy.deepcopy(model), x, device='cuda', input_shape=None, mixed_precision=args.mixed_precision)
-torch.cuda.empty_cache()

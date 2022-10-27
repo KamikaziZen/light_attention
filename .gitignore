@@ -1,7 +1,8 @@
 # User-defined
 logs/*
 *.sh
-
+*.pdf
+render/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

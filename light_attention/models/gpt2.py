@@ -111,9 +111,9 @@ class LightGPT2Attention(nn.Module):
             attn_weights = nn.functional.softmax(attn_weights, dim=-1)
 
         # downcasting to V.dtype here with dropmatmul enabled causes fp16 copies of fp32 softmax output to be stored
-        # instead downcasting is performed inside dropmatmul and does not cause additional copy
-        # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
+        # instead, downcasting is performed inside dropmatmul and does not cause additional copy
         if not self.use_dropmatmul: 
+            # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
             attn_weights = attn_weights.type(value.dtype)
         
         if self.use_dropmatmul:
