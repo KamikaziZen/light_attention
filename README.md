@@ -70,9 +70,10 @@ for i in range(len(model.h)):
 
 ## Benchmarks
 
+Experiment was conducted on a single GPU NVIDIA A100 80Gb. Memory stats for a training loop of classic GPT2 model configurations(gpt2-small/-medium/-large/-xl) and batch_size==4:
+
 ### PyTorch==1.10 
-(PyTorch==1.11 negates the effect of lightsoftmax. Probably because of in 1.11 the SoftMax oprator was implemented the same way. DropMatmul still gives about 20% memory reduction.) 
-Experiment was conducted on a single GPU NVIDIA A100 80Gb. Memory stats for a training loop of classic GPT2 model configurations(gpt2-small/-medium/-large/-xl) and batch_size==4 (memory is measured right after forward step to calculate the difference in activations size):
+(memory is measured right after forward step to calculate the difference in activations size)
 | Model  | Max Memory Allocated, MB | Max Memory Reserved, MB |
 |  :---:  |  :---:  |  :---:  |
 | Vanilla gpt2-small | 12119.3 | 12654.0 |
@@ -86,7 +87,13 @@ Experiment was conducted on a single GPU NVIDIA A100 80Gb. Memory stats for a tr
 
 ```-``` means that there was not enough memory to perform a single forward-backward iteration with this configuration.
 
+| Model  | Activations Memory, MB | Activations Memory (with Mixed Precision Training), MB |
+|  :---:  |  :---:  |  :---:  |
+| Vanilla gpt2-small | 11631.8 | 8486.0 |
+| Light gpt2-small | 7311.8 | 6326.04 |
+
 ### PyTorch==1.11
+(PyTorch==1.11 negates the effect of lightsoftmax. Probably because of in 1.11 the SoftMax oprator was implemented the same way. DropMatmul still gives about 20% memory reduction.) 
 <!-- | Model  | Max Memory Allocated, MB | Max Memory Reserved, MB |
 |  :---:  |  :---:  |  :---:  |
 | Vanilla gpt2-small | 9815.3 | 10322.0 |
