@@ -51,9 +51,21 @@ attn = LightGPT2Attention(config)
 model = LightGPT2Model(config)
 ```
 
-You can use both DropMatmul and LightAttention in the same block:
+## LightAttention
+
+You can use both DropMatmul and LightSoftmax in the same block:
 ```
+from transformers import GPT2Config, GPT2Model
+
 config = GPT2Config(use_lightsoftmax=True, use_dropmatmul=True)
+
+# through a model class with already substituted attention blocks
+model = LightGPT2Model(config)
+
+# or through substituting attention blocks of the original tranformers GPT2:
+model = GPT2Model(config)
+for i in range(len(model.h)):
+    model.h[i].attn = LightGPT2Attention(config)
 ```
 
 ## Benchmarks
