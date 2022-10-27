@@ -110,7 +110,8 @@ $ python eval_gpt_memory.py \
     --light_softmax \
     --drop_matmul \
     --mixed_precision \
-    --seed=3407
+    --seed=3407 \
+    --save_graph
 ```
 Example output: 
 ```
