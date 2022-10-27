@@ -7,6 +7,7 @@ from distutils.version import LooseVersion
 from graphviz import Digraph
 import warnings
 import os
+import wandb
 
 import torch
 from torch.autograd import Variable
@@ -260,7 +261,8 @@ def mem_usage():
     return (ma, max_ma, ca, max_ca)
 
 
-def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, mixed_precision=False, fout=None, verbose=False):
+def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, 
+                          mixed_precision=False, fout=None, run=None, verbose=False):
     """
     Prints out memory stats for stages of the training loop: loading of weights, forward path, backward path.
     Memory stats have a format of tuple (memory allocated, max memory allocated, reserved memory, max reserved memory).
@@ -289,7 +291,9 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, mixed_prec
     m.to(device)
     print('\nAfter placing the model on GPU:')
     mem_stats_1 = mem_usage()
-    print(f'\nParams (empirical) {round(mem_stats_1[0] - mem_stats_0[0], 4)} MB')
+    params_size = mem_stats_1[0] - mem_stats_0[0]
+    print(f'\nParams (empirical) {params_size:.2f} MB')
+    if run: wandb.log({'params_size': params_size})
 
     # param_bytes = 0
     # for pname, p in m.named_parameters():
@@ -316,7 +320,9 @@ def estimate_layer_memory(m, x=None, device='cuda', input_shape=None, mixed_prec
     torch.cuda.synchronize()
     print('\nAfter forward pass, before backward pass:')
     mem_stats_3 = mem_usage()
-    print(f'\nActivations (empirical) {round(mem_stats_3[0] - mem_stats_1[0], 4)} MB')
+    activations_size = mem_stats_3[0] - mem_stats_1[0]
+    print(f'\nActivations (empirical) {activations_size:.2f} MB')
+    if run: wandb.log({'activations_size': activations_size})
     
     if fout is not None:
         dot, RES = make_dot(y, params=dict(m.named_parameters()), show_attrs=True, show_saved=True, verbose=verbose)
