@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from light_attention.nn.functional.drop_matmul import drop_matmul
 

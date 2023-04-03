@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from torch.cuda.amp import custom_fwd, custom_bwd
 
 
 class LightSoftmax(torch.autograd.Function):
@@ -7,6 +8,7 @@ class LightSoftmax(torch.autograd.Function):
     that requires less activations to compute backward. It only depends on the output of the function.
     """
     @staticmethod
+    @custom_fwd
     def forward(ctx, input):
         """Forward operation that is similar to torch.nn.softmax.
         Except it only stores outputs for future backward.
@@ -30,6 +32,7 @@ class LightSoftmax(torch.autograd.Function):
         return sm_res
 
     @staticmethod
+    @custom_bwd
     def backward(ctx, grad_output):
         """Backward softmax operation, that uses only outputs
         to calculate loss gradients with respect to input.
