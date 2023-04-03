@@ -93,7 +93,7 @@ Experiment was conducted on a single GPU NVIDIA A100 80Gb. Memory stats for a tr
 | Light gpt2-small | 7311.8 | 6326.04 |
 
 ### PyTorch==1.11
-(PyTorch==1.11 negates the effect of lightsoftmax. Probably because of in 1.11 the SoftMax oprator was implemented the same way. DropMatmul still gives about 20% memory reduction.) 
+(PyTorch==1.11 negates the effect of lightsoftmax. Probably because in 1.11 the SoftMax oprator was implemented the same way. DropMatmul still gives about 20% memory reduction.) 
 <!-- | Model  | Max Memory Allocated, MB | Max Memory Reserved, MB |
 |  :---:  |  :---:  |  :---:  |
 | Vanilla gpt2-small | 9815.3 | 10322.0 |
